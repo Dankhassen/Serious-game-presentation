@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discovery Tour as Serious Gaming</title>
+  <style>
+    :root {
+      --bg-1: #0b1020;
+      --bg-2: #151b2f;
+      --glass: rgba(255, 255, 255, 0.085);
+      --glass-strong: rgba(255, 255, 255, 0.14);
+      --line: rgba(255, 255, 255, 0.18);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.66);
+      --faint: rgba(255, 255, 255, 0.42);
+      --accent: #d8b46a;
+      --accent-soft: rgba(216, 180, 106, 0.16);
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(216, 180, 106, 0.22), transparent 34%),
+        radial-gradient(circle at 88% 20%, rgba(90, 132, 194, 0.18), transparent 32%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 64%, #0e1424);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 58px 58px;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 78%);
+      pointer-events: none;
+    }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      perspective: 1200px;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 52px 64px 44px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 26px;
+      opacity: 0;
+      transform: translateX(34px) scale(0.985);
+      transition: opacity 520ms ease, transform 520ms ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .topbar, .bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .progress {
+      width: 230px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), rgba(255,255,255,0.76));
+      transition: width 400ms ease;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+      gap: 34px;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    .content.single {
+      grid-template-columns: 1fr;
+    }
+
+    .content.case-wide {
+      grid-template-columns: 0.78fr 1.22fr;
+      gap: 26px;
+      align-items: center;
+    }
+
+    .content.case-wide .panel {
+      padding: 28px;
+    }
+
+    .content.case-wide h2 {
+      font-size: clamp(30px, 3.4vw, 46px);
+    }
+
+    .content.case-wide .bodytext {
+      font-size: 18px;
+      line-height: 1.38;
+    }
+
+    .content.case-wide .image-figure .image-slot {
+      height: 520px;
+    }
+
+    .content.case-wide .image-figure .figure-image {
+      width: 100%;
+      height: auto;
+      max-height: 520px;
+    }
+
+    .content.case-wide .image-figure .caption {
+      font-size: 13px;
+      line-height: 1.32;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.055));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0.12), transparent 24%, transparent 78%, rgba(255,255,255,0.06));
+      pointer-events: none;
+    }
+
+    .plain {
+      padding: 20px 8px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(48px, 6vw, 82px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      max-width: 1000px;
+      font-weight: 760;
+    }
+
+    h2 {
+      font-size: clamp(34px, 4.2vw, 56px);
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+      font-weight: 740;
+      max-width: 980px;
+    }
+
+    h3 {
+      color: var(--accent);
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      font-weight: 680;
+    }
+
+    .lead {
+      font-size: clamp(21px, 2vw, 30px);
+      line-height: 1.28;
+      color: rgba(255,255,255,0.82);
+      max-width: 930px;
+      margin-top: 24px;
+    }
+
+    .bodytext {
+      font-size: 21px;
+      line-height: 1.43;
+      color: rgba(255,255,255,0.82);
+      max-width: 980px;
+    }
+
+    .bodytext + .bodytext { margin-top: 18px; }
+
+    .small {
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--accent);
+      font-size: 14px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+      font-weight: 720;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 38px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 99px;
+    }
+
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.075);
+      border-radius: 22px;
+      padding: 22px;
+      min-height: 130px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+    }
+
+    .card strong {
+      display: block;
+      color: rgba(255,255,255,0.95);
+      font-size: 19px;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .card span, .card p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.42;
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric b {
+      font-size: 56px;
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .metric span {
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 15px;
+    }
+
+    .image-slot {
+      min-height: 100%;
+      border: 1px dashed rgba(255,255,255,0.32);
+      background:
+        linear-gradient(135deg, rgba(216,180,106,0.12), transparent 45%),
+        rgba(255,255,255,0.045);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 28px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.045), var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-slot.image-filled {
+      background-image:
+        linear-gradient(135deg, rgba(11,16,32,0.08), rgba(11,16,32,0.24)),
+        var(--img);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-style: solid;
+    }
+
+    .image-slot.image-filled.contain {
+      background-size: contain;
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    .image-slot.image-filled .label {
+      display: none;
+    }
+
+    .image-figure {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.055));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-self: center;
+      width: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
+
+    .image-figure .image-slot {
+      min-height: 0;
+      height: 430px;
+      border: 0;
+      border-radius: calc(var(--radius) - 10px);
+      box-shadow: none;
+      background-color: transparent;
+    }
+
+    .image-figure .figure-image {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 430px;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 18px;
+      clip-path: inset(0 round 18px);
+      overflow: hidden;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .image-figure .figure-image.cover {
+      object-fit: cover;
+    }
+
+    .image-figure .caption {
+      margin: 0;
+      padding: 0 4px 2px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.38;
+      text-align: left;
+    }
+
+    .image-figure .caption strong {
+      color: rgba(255,255,255,0.86);
+      font-weight: 680;
+    }
+
+    .image-figure.natural {
+      padding: 10px;
+      gap: 10px;
+      width: fit-content;
+      max-width: 100%;
+      align-items: center;
+    }
+
+    .image-figure.natural .figure-image {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 520px;
+      object-fit: contain;
+      background: transparent;
+    }
+
+    .image-figure.natural .caption {
+      padding: 0 2px 2px;
+      font-size: 13px;
+      line-height: 1.32;
+    }
+
+    .image-figure.paper {
+      padding: 10px 10px 12px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
+    }
+
+    .image-figure.paper .figure-image {
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+      border-radius: 18px;
+      clip-path: inset(0 round 18px);
+    }
+
+    .content.case-wide .image-figure.natural {
+      width: 100%;
+    }
+
+    .content.case-wide .image-figure.natural .figure-image {
+      width: 100%;
+      height: auto;
+      max-height: 520px;
+    }
+
+    .image-slot::before {
+      content: "";
+      position: absolute;
+      width: 150%;
+      height: 150%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 36%);
+      top: -85%;
+      left: -60%;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+
+    .image-slot .label {
+      position: relative;
+      z-index: 2;
+      max-width: 460px;
+    }
+
+    .image-slot .label b {
+      display: block;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 10px;
+    }
+
+    .image-slot .label span {
+      display: block;
+      font-size: 15px;
+      line-height: 1.4;
+      color: var(--faint);
+    }
+
+    .quote {
+      font-size: 30px;
+      line-height: 1.23;
+      letter-spacing: -0.025em;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--line);
+      margin: 22px 0;
+    }
+
+    .source {
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(255,255,255,0.48);
+      margin-top: 16px;
+    }
+
+    .notes {
+      display: none;
+    }
+
+    .keyboard {
+      color: var(--faint);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 8px 12px;
+      border: 1px solid rgba(216,180,106,0.32);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      color: rgba(255,255,255,0.76);
+      font-size: 13px;
+      margin: 4px 6px 4px 0;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .step .num {
+      height: 42px;
+      width: 42px;
+      border-radius: 14px;
+      background: rgba(216,180,106,0.18);
+      border: 1px solid rgba(216,180,106,0.34);
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      font-weight: 750;
+    }
+
+    .step p {
+      font-size: 18px;
+      line-height: 1.37;
+      color: var(--muted);
+      padding-top: 2px;
+    }
+
+    @keyframes drift {
+      from { transform: translate(0,0) rotate(0deg); }
+      to { transform: translate(18%, 22%) rotate(12deg); }
+    }
+
+    @media (max-width: 980px) {
+      .slide { padding: 32px; }
+      .content { grid-template-columns: 1fr; overflow-y: auto; }
+      .image-slot { min-height: 280px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      body { overflow: auto; }
+      .deck { height: auto; min-height: 100vh; }
+      .slide { position: relative; display: none; min-height: 100vh; }
+      .slide.active { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+
+    <section class="slide active">
+      <div class="topbar"><span>Serious Gaming and History Education</span><span>01 / 15</span></div>
+      <div class="content">
+        <div class="plain">
+          <div class="kicker">Case study presentation</div>
+          <h1>Discovery Tour as a serious game for historical learning</h1>
+          <p class="lead">Assassin’s Creed Origins: Discovery Tour is examined as a rare high-budget educational adaptation of a commercial AAA historical game</p>
+          <div class="divider"></div>
+          <p class="small">Core sources: Bjørner’s systematic review on game-based learning in history education and Poiron’s behind-the-scenes account of the Discovery Tour production process</p>
+        </div>
+        <div class="image-slot image-filled" style="--img: url('https://m.media-amazon.com/images/M/MV5BMzM0YWZmYWYtMmZmZS00Yjk1LWExMTMtMjI1Mzk2ZGRiODAwXkEyXkFqcGc@._V1_.jpg');">
+          <div class="label"><b>Image placeholder</b><span>Discovery Tour landscape or official key art.</span></div>
+        </div>
+      </div>
+      <div class="bottombar"><span>Academic paper and applied example</span><span class="keyboard">by Daniyar Khassen, University of Vienna, 2026</span></div>
+      <aside class="notes">Open by positioning the topic as a serious game case, not as a general talk about Assassin’s Creed. The central argument is that Discovery Tour helps us connect the promise and the limits of historical game-based learning</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Research problem</span><span>02 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="kicker">Why history is a difficult subject for games</div>
+          <h2>History education is not only about transmitting facts</h2>
+          <p class="lead">Bjørner frames historical learning as a form of historical thinking: understanding context, perspective, evidence and interpretation. This matters because games can show historical spaces, but they do not automatically teach historical reasoning</p>
+          <div class="grid-3" style="margin-top: 34px;">
+            <div class="card"><strong>Content problem</strong><span>History often becomes text-heavy and teacher-centered, especially when the past is reduced to names, dates and events</span></div>
+            <div class="card"><strong>Experience problem</strong><span>The past cannot be directly experienced. Digital environments can make it visible, spatial and navigable</span></div>
+            <div class="card"><strong>Evidence problem</strong><span>Engagement is easier to observe than learning. Enjoyment does not prove durable understanding</span></div>
+          </div>
+          <p class="source">Thomas Bjørner, A Systematic Review of Examples and the Effectiveness of Game-
+Based Learning Used To Teach History in K-12 Education</p>
+        </div>
+      </div>
+      <div class="bottombar"><span>From factual recall to historical thinking</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This slide establishes that a historical game should not be judged only by visual accuracy. The deeper question is whether the game supports historical understanding</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Bjørner’s systematic review</span><span>03 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">Methodological filter</div>
+          <h2>A large field becomes very small when evidence is required</h2>
+          <p class="bodytext">Bjørner’s review starts with 688 records and narrows them to only 12 studies that fit the criteria: digital game-based learning, history or cultural heritage, K-12 education and implemented learning contexts</p>
+          <p class="bodytext">This matters for our case. Discovery Tour can be presented as a strong design example, but Bjørner’s filter reminds us not to treat visual quality as proof of learning effectiveness</p>
+        </div>
+        <figure class="image-figure natural paper">
+          <img class="figure-image" src="images/PRISM.png" alt="PRISMA screening flowchart from Bjørner’s systematic review">
+          <figcaption class="caption"><strong>PRISMA screening in Bjørner’s review.</strong> The flowchart shows why the evidence base becomes narrow: many texts discuss history games, but only a small group evaluates implemented digital games in K-12 history education</figcaption>
+        </figure>
+      </div>
+      <div class="bottombar"><span>Systematic review logic</span><div class="progress"><span></span></div></div>
+      <aside class="notes">Mention that the review is useful because it is not just descriptive. It asks what methods are used to evaluate learning outcomes and how effective GBL appears to be</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Evidence base</span><span>04 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="grid-3">
+            <div class="card metric"><b>688</b><span>Initial records identified in the review</span></div>
+            <div class="card metric"><b>12</b><span>Studies included after screening</span></div>
+            <div class="card metric"><b>2</b><span>Included studies with more than 100 participants</span></div>
+          </div>
+          <div class="divider"></div>
+          <h2>Historical GBL research is heterogeneous and hard to compare</h2>
+          <p class="lead">The included studies vary by topic, technology, age group, setting, teacher involvement and evaluation method. This makes broad claims about effectiveness risky</p>
+          <div style="margin-top: 24px;">
+            <span class="pill">PC games</span><span class="pill">Mobile games</span><span class="pill">VR</span><span class="pill">AR</span><span class="pill">On-site play</span><span class="pill">Classroom use</span>
+          </div>
+          <p class="source">Source basis: Bjørner, methods, overview and included studies</p>
+        </div>
+      </div>
+      <div class="bottombar"><span>Evidence does not scale evenly across contexts</span><div class="progress"><span></span></div></div>
+      <aside class="notes">Use this slide to avoid an overly simple “games work” claim. The field is promising but fragmented</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Main findings</span><span>05 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">What Bjørner finds</div>
+          <h2>Motivation is the strongest result. Learning effectiveness is less settled</h2>
+          <p class="bodytext">Almost all included studies report positive motivation, engagement or perception when games are used in history teaching. This is the clearest pattern in the review</p>
+          <p class="bodytext">The evidence for measurable learning outcomes is weaker. Some studies show significant gains, some show no difference compared with regular instruction, and many rely on limited samples or self-reporting</p>
+        </div>
+        <div class="panel">
+          <h3>Interpretation</h3>
+          <p class="quote">The research field supports the educational promise of historical games, but not a simple claim that games reliably outperform traditional teaching</p>
+          <div class="divider"></div>
+          <p class="small">For a serious game, engagement is necessary but not sufficient. The educational structure still needs to be explicit enough to support learning, assessment and classroom use</p>
+        </div>
+      </div>
+      <div class="bottombar"><span>Promise without overclaiming</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This is a key synthesis point. Present it calmly. Engagement is a valuable educational condition, but it is not equivalent to measured learning</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Evaluation challenge</span><span>06 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="kicker">What is actually measured</div>
+          <h2>The evaluation methods often measure short-term response rather than durable learning</h2>
+          <div class="grid-2" style="margin-top: 30px;">
+            <div class="card"><strong>Common methods</strong><span>Questionnaires, knowledge tests, pre/post-tests, interviews, observations, focus groups and think-aloud notes</span></div>
+            <div class="card"><strong>Methodological limits</strong><span>Small samples, different settings, limited randomization, direct knowledge questions and no longitudinal studies</span></div>
+            <div class="card"><strong>Learning objectives</strong><span>Bjørner notes that specific learning objectives are rarely included clearly in the games themselves</span></div>
+            <div class="card"><strong>Age and measurement</strong><span>Even Likert-scale questionnaires can be questionable with younger pupils if the scale or questions are not well matched to cognitive ability</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar"><span>Measurement shapes the conclusion</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This slide prepares the transition. Discovery Tour can be strong as a design example while still requiring careful evaluation as an educational intervention</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Synthesis of Bjørner</span><span>07 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="kicker">From review to case selection</div>
+          <h2>A strong serious game should solve a design problem and remain open to an evidence problem</h2>
+          <p class="lead">Bjørner’s review suggests a useful standard for judging a historical serious game. It should use the affordances of games, such as space, narrative and interaction, while making educational goals visible enough to be studied</p>
+          <div class="grid-3" style="margin-top: 34px;">
+            <div class="card"><strong>Immersion</strong><span>Historical spaces should be experienced as environments, not only as text</span></div>
+            <div class="card"><strong>Structure</strong><span>Learning content should be organized into clear, accessible units</span></div>
+            <div class="card"><strong>Assessment</strong><span>Claims about learning should be separated from claims about attention and interest</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar"><span>The review becomes an analytical lens</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This is the bridge. Say that Discovery Tour is interesting because it is not a small prototype. It is a high-budget attempt to design history learning inside an existing historical world</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Case transition</span><span>08 / 15</span></div>
+      <div class="content case-wide">
+        <div class="panel">
+          <div class="kicker">Discovery Tour</div>
+          <h2>A rare AAA-level educational case in serious gaming</h2>
+          <p class="bodytext">Assassin’s Creed Origins already had a reputation for historical environments, monuments and contextual information. Discovery Tour goes further by turning the game world into a non-combat educational mode</p>
+          <p class="bodytext">The result is not a conventional school game. It is a commercial open world redirected toward guided historical learning</p>
+        </div>
+        <figure class="image-figure natural">
+          <img class="figure-image" src="https://cdn.arstechnica.net/wp-content/uploads/2017/09/acodiscovery-scaled.jpg" alt="Discovery Tour mode interface in Assassin's Creed Origins">
+          <figcaption class="caption"><strong>Discovery Tour mode in Assassin’s Creed Origins.</strong> The image shows the educational mode as a navigable historical environment rather than a conventional combat sequence</figcaption>
+        </figure>
+      </div>
+      <div class="bottombar"><span>From research gap to high-budget example</span><div class="progress"><span></span></div></div>
+      <aside class="notes">Avoid sounding promotional. The point is analytical: production scale and expert involvement make this case unusual compared with many small educational prototypes</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>What the game changes</span><span>09 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">Design conversion</div>
+          <h2>Discovery Tour removes the usual game pressure and keeps the historical world</h2>
+          <p class="bodytext">Poiron describes the original idea as removing conflict and narrative, then building curated tours inside the same environment. The player can access the full map of Egypt, travel freely and then enter guided learning experiences</p>
+          <div class="divider"></div>
+          <p class="small">This is a meaningful design shift: the core interaction becomes observation, movement and contextual explanation rather than combat or mission completion</p>
+        </div>
+        <div class="panel">
+          <h3>Serious game logic</h3>
+          <div class="timeline">
+            <div class="step"><div class="num">1</div><p>The commercial world provides spatial immersion and visual detail</p></div>
+            <div class="step"><div class="num">2</div><p>Conflict and main narrative pressure are removed for classroom suitability</p></div>
+            <div class="step"><div class="num">3</div><p>Curated tours turn exploration into structured learning</p></div>
+            <div class="step"><div class="num">4</div><p>The player becomes closer to a visitor, observer and learner than a conventional action-game protagonist</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar"><span>Game mechanics redirected toward learning</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This slide defines the serious game transformation. It is not that the player learns by accidentally playing the main game. The mode is redesigned for educational use</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Production process</span><span>10 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">Behind the scenes</div>
+          <h2>Historical expertise was built into the production pipeline</h2>
+          <p class="bodytext">Poiron describes a production process involving historians, Egyptologists, Hellenists and museum documentation. Experts contributed to the interpretation of daily life, Ptolemaic Egypt, language environment and scientific capsules</p>
+          <p class="bodytext">This makes Discovery Tour different from a game that merely uses history as visual decoration. It tries to translate scholarship into accessible interaction</p>
+        </div>
+        <figure class="image-figure natural paper">
+          <img class="figure-image" src="images/Methodology.png" alt="Discovery Tour production methodology diagram">
+          <figcaption class="caption"><strong>Production methodology behind Discovery Tour.</strong> The diagram shows how historical expertise, writing, adaptation and 3D integration were organized into a production pipeline for the educational mode</figcaption>
+        </figure>
+      </div>
+      <div class="bottombar"><span>Scholarship as production input</span><div class="progress"><span></span></div></div>
+      <aside class="notes">Mention that this matters academically because accuracy is not only a final visual judgment. It depends on who is involved and how knowledge is adapted</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Educational structure</span><span>11 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="kicker">Tours as learning units</div>
+          <h2>The content is organized around attention, accessibility and historical themes</h2>
+          <p class="lead">The Discovery Tour expanded from an initial plan of 20 tours to 75 tours organized around Egypt, Romans, pyramids, daily life and Alexandria. The design also limits attention load: tours should stay within roughly 20 minutes, with stations taking about 3 to 5 minutes</p>
+          <div class="grid-3" style="margin-top: 34px;">
+            <div class="card"><strong>Curated knowledge</strong><span>Historian-written material is adapted into shorter, accessible texts</span></div>
+            <div class="card"><strong>Spatial anchoring</strong><span>Learning occurs in the place being described, not outside the world</span></div>
+            <div class="card"><strong>Museum support</strong><span>Objects and documentation connect the 3D reconstruction to material evidence</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar"><span>Content design is also attention design</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This slide connects Poiron to Bjørner. It shows clearer learning structure than many generic historical games, while still needing evaluation of outcomes</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Accuracy and accessibility</span><span>12 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">A serious game is not a perfect simulation</div>
+          <h2>Discovery Tour works through controlled compromise</h2>
+          <p class="bodytext">Poiron is explicit about artistic liberties. In the Temple of Ptah tour, the player can enter spaces ordinary people historically could not access. The game uses this nonrealistic access to explain the restriction</p>
+          <p class="bodytext">The game also censors nudity on Greek statues for a global classroom audience. This is not historical realism. It is a design decision shaped by age rating, cultural circulation and educational reach</p>
+        </div>
+        <figure class="image-figure">
+          <img class="figure-image" src="images/Censored.png" alt="Censored statue in Discovery Tour">
+          <figcaption class="caption"><strong>Censored nude statue in Discovery Tour.</strong> The covered statue illustrates how historical reconstruction was adjusted for classroom suitability and global distribution, even when the change reduced historical realism</figcaption>
+        </figure>
+      </div>
+      <div class="bottombar"><span>Accuracy is negotiated, not absolute</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This is the main critical slide for the Discovery Tour section. The point is not to attack the game but to show that educational design involves trade-offs</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Linking both papers</span><span>13 / 15</span></div>
+      <div class="content single">
+        <div class="panel">
+          <div class="kicker">Synthesis</div>
+          <h2>Discovery Tour answers several design weaknesses, but not the whole evidence problem</h2>
+          <div class="grid-2" style="margin-top: 30px;">
+            <div class="card"><strong>What it answers</strong><span>It gives a rare high-budget example of expert-informed content, strong immersion, structured tours and classroom-suitable design</span></div>
+            <div class="card"><strong>What remains open</strong><span>It does not by itself prove learning effectiveness. Motivation, interest and visual quality still need to be separated from learning outcomes</span></div>
+          </div>
+          <div class="divider"></div>
+          <p class="quote">The Discovery Tour is best understood as a highly developed educational design case, not as automatic proof that historical games improve learning</p>
+        </div>
+      </div>
+      <div class="bottombar"><span>Design quality and evidence quality are different questions</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This is probably the most important academic synthesis. It protects the argument from becoming marketing for Ubisoft</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Evaluation proposal</span><span>14 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">How it could be studied</div>
+          <h2>A strong classroom study should separate engagement from learning</h2>
+          <p class="bodytext">Following Bjørner’s critique, a useful evaluation of Discovery Tour would need a clear learning objective, a control group, pre/post knowledge tests and a delayed follow-up. It should also measure whether students can explain historical context rather than only recall tour facts</p>
+          <p class="bodytext">This would test the educational effect of the serious game more directly than measuring whether students liked the experience</p>
+        </div>
+        <div class="panel">
+          <h3>Possible research design</h3>
+          <div class="timeline">
+            <div class="step"><div class="num">A</div><p>Define a narrow unit, for example pyramid workers, mummification or temple access</p></div>
+            <div class="step"><div class="num">B</div><p>Compare Discovery Tour with a text-based or video-based lesson on the same content</p></div>
+            <div class="step"><div class="num">C</div><p>Use pre/post and delayed tests with factual and interpretive questions</p></div>
+            <div class="step"><div class="num">D</div><p>Add observation or interviews to understand how students used the space</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar"><span>From case description to researchable intervention</span><div class="progress"><span></span></div></div>
+      <aside class="notes">This slide gives the presentation a master-level ending. It shows that the case is not only described, but evaluated through the framework of the systematic review</aside>
+    </section>
+
+    <section class="slide">
+      <div class="topbar"><span>Conclusion</span><span>15 / 15</span></div>
+      <div class="content">
+        <div class="panel">
+          <div class="kicker">Final claim</div>
+          <h2>Discovery Tour is a strong serious game because it converts historical spectacle into structured learning</h2>
+          <p class="bodytext">Its value comes from the combination of AAA visual production, expert collaboration, curated tours and museum-supported documentation. It shows what high-quality historical serious gaming can look like when educational design is taken seriously</p>
+          <p class="bodytext">At the same time, Bjørner’s review prevents an easy conclusion. The game is convincing as an educational design case, but its measurable learning impact still depends on careful classroom evaluation</p>
+        </div>
+        <figure class="image-figure natural">
+          <img class="figure-image cover" src="https://b2203835.smushcdn.com/2203835/wp-content/uploads/2017/11/ac-origins-2.jpg?lossy=1&amp;strip=0&amp;webp=1" alt="Assassin's Creed Origins historical environment">
+          <figcaption class="caption"><strong>Assassin’s Creed Origins as historical spectacle.</strong> The closing visual returns to the central tension of the case: a commercial open world can become an educational environment when its spectacle is reorganized through guided learning</figcaption>
+        </figure>
+      </div>
+      <div class="bottombar"><span>Conclusion: design strength with evaluation caution</span><div class="progress"><span></span></div></div>
+      <aside class="notes">End with the balanced thesis: Discovery Tour is an unusually mature example of serious gaming, but academic analysis should still distinguish design excellence from proven learning outcomes</aside>
+    </section>
+
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progressBars = Array.from(document.querySelectorAll('.progress span'));
+    let current = 0;
+
+    function setProgress() {
+      progressBars.forEach(bar => {
+        bar.style.width = `${((current + 1) / slides.length) * 100}%`;
+      });
+    }
+
+    function showSlide(index) {
+      current = Math.max(0, Math.min(slides.length - 1, index));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      setProgress();
+    }
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') showSlide(current + 1);
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') showSlide(current - 1);
+      if (event.key === 'Home') showSlide(0);
+      if (event.key === 'End') showSlide(slides.length - 1);
+    });
+
+    document.addEventListener('click', event => {
+      const x = event.clientX / window.innerWidth;
+      if (x > 0.55) showSlide(current + 1);
+      else showSlide(current - 1);
+    });
+
+    setProgress();
+  </script>
+</body>
+</html>
